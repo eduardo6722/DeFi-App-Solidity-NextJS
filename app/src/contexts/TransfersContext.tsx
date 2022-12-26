@@ -7,15 +7,15 @@ export const TransfersContext = createContext<TransfersContextProps>(
 
 function TransfersProvider({ children }) {
   const [account, setAccount] = useState<string>()
-  const [eth, setEth] = useState<any>()
+  const [metamask, setMetamask] = useState<any>()
 
   const handleConnectWallet = useCallback(async () => {
     try {
-      if (!eth) {
+      if (!metamask) {
         alert('Please install Metamask!')
         return
       }
-      const accounts = (await eth.request({
+      const accounts = (await metamask.request({
         method: 'eth_requestAccounts',
       })) as string[]
       if (accounts?.length) {
@@ -24,14 +24,29 @@ function TransfersProvider({ children }) {
     } catch (error) {
       console.error(error)
     }
-    if (!eth) return
-  }, [eth])
+    if (!metamask) return
+  }, [metamask])
 
   useEffect(() => {
     if ((window as any)?.ethereum) {
-      setEth((window as any).ethereum)
+      setMetamask((window as any).ethereum)
     }
   }, [])
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        if (!metamask) return
+        const accounts = await metamask.request({ method: 'eth_accounts' })
+        if (accounts?.length) {
+          setAccount(accounts[0])
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    checkConnection()
+  }, [metamask])
 
   return (
     <TransfersContext.Provider value={{ account, handleConnectWallet }}>

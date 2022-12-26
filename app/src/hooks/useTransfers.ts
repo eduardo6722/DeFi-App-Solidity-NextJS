@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { TransfersContext } from 'src/Contexts/TransfersContext'
+import { TransfersContext } from 'src/contexts/TransfersContext'
 
 function useTransfers() {
   return useContext(TransfersContext)

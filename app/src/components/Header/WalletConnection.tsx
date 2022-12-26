@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 function WalletConnection() {
   const { handleConnectWallet, account } = useTransfers()
-  console.log(account)
+
   return (
     <div className="flex flex-row gap-4">
       <div className="flex flex-row gap-2 items-center">

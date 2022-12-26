@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers } from 'ethers'
 import { createContext, useCallback, useEffect, useState } from 'react'
+import { contractABI, contractAddress } from 'src/config/contracts'
+import { sanity } from 'src/config/sanity'
 
 export const TransfersContext = createContext<TransfersContextProps>(
   {} as TransfersContextProps
@@ -40,12 +42,46 @@ function TransfersProvider({ children }) {
     return transactionContract
   }, [])
 
+  const saveTransaction = useCallback(
+    async (
+      transactionHash: string,
+      amount: string | number,
+      toAddress: string
+    ) => {
+      const doc = {
+        _id: transactionHash,
+        _type: 'transactions',
+        txHash: transactionHash,
+        fromAddress: account,
+        toAddress,
+        amount: Number(amount),
+        timestamp: new Date(Date.now()).toISOString(),
+      }
+      await sanity.createIfNotExists(doc)
+      await sanity
+        .patch(account as string)
+        .setIfMissing({ transactions: [] })
+        .insert('after', 'transactions[-1]', [
+          {
+            _key: transactionHash,
+            _ref: transactionHash,
+            _type: 'reference',
+          },
+        ])
+        .commit()
+    },
+    [account]
+  )
+
   const handleSendTransaction = useCallback(
     async ({ addressTo, amount }: TransaferData) => {
       try {
         if (!metamask || !account) return
         setLoading(true)
         const contract = getContract()
+        contract.on('Transfer', (data) => {
+          console.info(data)
+        })
         const parsedEther = ethers.utils.parseEther(String(amount))
         await metamask.request({
           method: 'eth_sendTransaction',
@@ -55,18 +91,17 @@ function TransfersProvider({ children }) {
               to: addressTo,
               gas: '0x7ef40',
               value: parsedEther._hex,
-              data: 'Hello',
             },
           ],
         })
-        // const transaction = await contract.publishTransaction(
-        //   addressTo,
-        //   parsedEther,
-        //   `Transfering ETH ${parsedEther} to ${addressTo}`,
-        //   'TRANSFER'
-        // )
-        // await transaction.wait()
-        // await saveTransaction(transaction.hash, parsedEther, account, addressTo)
+        const transaction = await contract.publishTransaction(
+          addressTo,
+          parsedEther,
+          `Transfering ETH ${parsedEther} to ${addressTo}`,
+          'TRANSFER'
+        )
+        await transaction.wait()
+        await saveTransaction(transaction.hash, amount, addressTo)
       } catch (error) {
         console.error(error)
       } finally {
@@ -96,6 +131,21 @@ function TransfersProvider({ children }) {
     }
     checkConnection()
   }, [metamask])
+
+  useEffect(() => {
+    async function createUser() {
+      const userDoc = {
+        _type: 'users',
+        _id: account as string,
+        address: account,
+        userName: account,
+      }
+      await sanity.createIfNotExists(userDoc)
+    }
+    if (account) {
+      createUser()
+    }
+  }, [account])
 
   return (
     <TransfersContext.Provider

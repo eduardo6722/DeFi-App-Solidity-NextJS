@@ -1,6 +1,6 @@
 interface TransaferData {
   addressTo: string
-  amount: number
+  amount: number | string
 }
 
 interface TransfersContextProps {

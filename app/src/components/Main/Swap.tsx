@@ -1,4 +1,5 @@
 import Input from '@/components/Input/Input'
+import useTransfers from '@/hooks/useTransfers'
 import Image from 'next/image'
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
@@ -7,8 +8,10 @@ import { FaCog } from 'react-icons/fa'
 function Swap() {
   const { register, handleSubmit } = useForm<TransaferData>()
 
-  const onSumit = useCallback(({ addressTo, amount }: TransaferData) => {
-    console.log(addressTo, amount)
+  const { handleSendTransaction } = useTransfers()
+
+  const onSumit = useCallback(async ({ addressTo, amount }: TransaferData) => {
+    await handleSendTransaction({ addressTo, amount })
   }, [])
 
   return (
@@ -25,7 +28,8 @@ function Swap() {
           }
           type="number"
           placeholder="0.0"
-          {...register('amount', { required: true, min: 0.1 })}
+          step="0.00000001"
+          {...register('amount', { required: true })}
         />
         <Input
           fullWidth

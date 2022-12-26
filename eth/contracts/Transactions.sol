@@ -12,7 +12,7 @@ contract Transactions {
     );
 
     function publishTransaction(
-        address payable receiver,
+        address receiver,
         uint amount,
         string memory message,
         string memory keyword

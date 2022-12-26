@@ -1,5 +1,5 @@
 # DeFi App Example
 
-- Contracts => ./contracts
+- Contracts => ./eth
 - Sanity Studio => ./sanity
 - NextJS App => ./app
